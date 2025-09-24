@@ -8,7 +8,6 @@ It works **without MetalLB** and is reachable from other machines on the same ne
 
 ## Prerequisites
 
-- **Ubuntu physical host** with a LAN IP (e.g., `192.168.15.10`)
 - **Docker** 20+
 - **Kind** 0.20+
 - **kubectl** 1.27+
@@ -46,11 +45,11 @@ make app           # apply manifests and wait for rollout
 ### Access
 - **By hostname (recommended):** on your laptop add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows):
   ```
-  192.168.15.10  petclinic.local
+  YOUR-HOST-IP  petclinic.local
   ```
   Open `http://petclinic.local/`.
 
-- **By IP (no hosts editing):** remove `host:` from the Ingress in `petclinic.yaml` (catch-all), then open `http://192.168.15.10/`.
+- **By IP (no hosts editing):** remove `host:` from the Ingress in `petclinic.yaml` (catch-all), then open `http://YOUR-HOST-IP/`.
 
 ---
 
