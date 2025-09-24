@@ -1,0 +1,13 @@
+# ingress-nginx-values.yaml
+controller:
+  hostPort:
+    enabled: true
+  service:
+    type: ClusterIP   # sem NodePort/LoadBalancer
+  nodeSelector:
+    kubernetes.io/hostname: dev-cluster-control-plane
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+

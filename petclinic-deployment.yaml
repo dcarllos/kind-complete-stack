@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+  labels: { app: petclinic }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: petclinic }
+  template:
+    metadata:
+      labels: { app: petclinic }
+    spec:
+      volumes:
+        - name: apm-agent
+          emptyDir: {}
+            #initContainers:
+            #- name: fetch-apm-agent
+            #image: docker.elastic.co/observability/apm-agent-java:1.46.0
+            #command: ["sh","-c"]
+            #args: ["cp /usr/agent/elastic-apm-agent.jar /elastic/apm/"]
+            #volumeMounts:
+            #- name: apm-agent
+            #'  mountPath: /elastic/apm
+      containers:
+        - name: petclinic
+          image: petclinic:local
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: apm-agent
+              mountPath: /elastic/apm
+          env:
+            # Elastic APM (opcional; remova se não usar)
+            #- name: JAVA_TOOL_OPTIONS
+            #  value: "-javaagent:/elastic/apm/elastic-apm-agent.jar -XX:+UseContainerSupport -XX:ActiveProcessorCount=2"
+            #- name: ELASTIC_APM_SERVER_URLS
+            #  value: "http://apm-server-apm-server.observability.svc:8200"
+            - name: ELASTIC_APM_SERVICE_NAME
+              value: "petclinic"
+            - name: ELASTIC_APM_ENVIRONMENT
+              value: "dev"
+            # workarounds dos crashes de métricas/JMX
+            - name: SPRING_JMX_ENABLED
+              value: "false"
+            - name: MANAGEMENT_METRICS_ENABLE_SYSTEM
+              value: "false"
+            - name: MANAGEMENT_METRICS_ENABLE_TOMCAT
+              value: "false"
+            - name: SPRING_AUTOCONFIGURE_EXCLUDE
+              value: "org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration,org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: petclinic
+spec:
+  selector:
+    app: petclinic
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: petclinic
+  annotations:
+    # opcional: redirecionar / para /
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: petclinic.local         # se quiser por IP direto, remova esta linha e a indentação de 'host'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: petclinic
+                port:
+                  number: 80
+
